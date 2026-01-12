@@ -1,4 +1,30 @@
-node_modules
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment variables
 .env
 .env.local
+.env.*.local
+
+# Firebase credentials (NEVER COMMIT!)
+firebase-service-account.json
+*-service-account.json
+serviceAccountKey.json
+
+# Logs
 *.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
