@@ -10,7 +10,9 @@ from datetime import datetime
 import asyncio
 
 import firebase_admin
-from firebase_admin import credentials, firestore, auth
+from firebase_admin import credentials, firestore, auth, storage
+import base64
+import uuid
 
 # Load environment variables
 load_dotenv()
@@ -19,8 +21,10 @@ load_dotenv()
 # Make sure to download your Firebase service account key and rename it to
 # 'firebase-service-account.json' and place it in the 'Backend' directory.
 try:
-    cred = credentials.Certificate("Backend/firebase-service-account.json")
-    firebase_admin.initialize_app(cred)
+    cred = credentials.Certificate("firebase-service-account.json")
+    firebase_admin.initialize_app(cred, {
+        'storageBucket': 'coupleasapp.appspot.com'
+    })
     print("✅ Firebase App initialized")
 except Exception as e:
     print(f"❌ Firebase initialization error: {e}")
@@ -28,6 +32,7 @@ except Exception as e:
     # For now, we'll let it run but endpoints will fail.
 
 db = firestore.client()
+bucket = storage.bucket()
 
 # Pydantic Models (mostly unchanged, removed Mongo-specific parts)
 class UserSignup(BaseModel):
@@ -101,53 +106,70 @@ async def health_check():
 # Authentication endpoints
 @app.post("/api/auth/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def signup(user: UserSignup, db: firestore.client = Depends(get_db)):
-    """Register a new user using Firebase Authentication"""
+    """Register a new user with email and password"""
     try:
-        # Create user in Firebase Auth
-        user_record = auth.create_user(
-            email=user.email,
-            password=user.password
-        )
+        # Check if user already exists
+        users_ref = db.collection("users").where("email", "==", user.email).limit(1)
+        existing_users = list(users_ref.stream())
+        
+        if existing_users:
+            raise HTTPException(status_code=400, detail="User already exists")
+        
+        # Hash the password
+        password_hash = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt())
         
         # Create user profile in Firestore
         user_data = {
             "email": user.email,
+            "passwordHash": password_hash.decode('utf-8'),
             "isPremium": False,
             "specialDate": None,
             "createdAt": datetime.now().isoformat()
         }
-        db.collection("users").document(user_record.uid).set(user_data)
+        
+        # Add the user document
+        update_time, new_user_ref = db.collection("users").add(user_data)
         
         return UserResponse(
-            uid=user_record.uid,
+            uid=new_user_ref.id,
             email=user.email,
             isPremium=False,
             specialDate=None
         )
-    except auth.EmailAlreadyExistsError:
-        raise HTTPException(status_code=400, detail="User already exists")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
 
-@app.post("/api/auth/login")
-async def login_placeholder():
-    """Placeholder for Firebase login"""
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Login flow has changed. The client should now use the Firebase SDK to sign in (e.g., with email/password), get an ID token, and send that token to a new protected backend endpoint for verification. This endpoint only accepts email/password and cannot securely verify them with Firebase Admin SDK alone."
-    )
-# Note for developer: A proper protected endpoint would look something like this:
-# from fastapi.security import OAuth2PasswordBearer
-# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-# @app.get("/api/user/me")
-# async def get_user_me(token: str = Depends(oauth2_scheme)):
-#     try:
-#         decoded_token = auth.verify_id_token(token)
-#         uid = decoded_token['uid']
-#         # fetch user data from Firestore
-#         return {"uid": uid}
-#     except auth.InvalidIdTokenError:
-#         raise HTTPException(status_code=401, detail="Invalid token")
+@app.post("/api/auth/login", response_model=UserResponse)
+async def login(user: UserLogin, db: firestore.client = Depends(get_db)):
+    """Login with email and password"""
+    try:
+        # Find user by email
+        users_ref = db.collection("users").where("email", "==", user.email).limit(1)
+        users = list(users_ref.stream())
+        
+        if not users:
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        
+        user_doc = users[0]
+        user_data = user_doc.to_dict()
+        
+        # Verify password
+        stored_hash = user_data.get("passwordHash", "")
+        if not bcrypt.checkpw(user.password.encode('utf-8'), stored_hash.encode('utf-8')):
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        
+        return UserResponse(
+            uid=user_doc.id,
+            email=user_data["email"],
+            isPremium=user_data.get("isPremium", False),
+            specialDate=user_data.get("specialDate")
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
 
 
 # Photo endpoints
@@ -167,7 +189,7 @@ async def get_photos(user_id: str, db: firestore.client = Depends(get_db)):
 
 @app.post("/api/photos", response_model=PhotoResponse, status_code=status.HTTP_201_CREATED)
 async def upload_photo(photo: PhotoUpload, db: firestore.client = Depends(get_db)):
-    """Upload a new photo for a user to Firestore"""
+    """Upload a new photo for a user to Firebase Storage and Firestore"""
     # Check if user exists
     user_ref = db.collection("users").document(photo.userId)
     user_doc = user_ref.get()
@@ -184,16 +206,51 @@ async def upload_photo(photo: PhotoUpload, db: firestore.client = Depends(get_db
     if photo_count >= 100 and not user_data.get("isPremium", False):
         raise HTTPException(status_code=403, detail="limit_reached")
 
-    # Create photo document
-    photo_doc = photo.model_dump()
-    photo_doc["uploadDate"] = datetime.now().isoformat()
-    
-    update_time, new_photo_ref = db.collection("photos").add(photo_doc)
-    
-    return PhotoResponse(
-        id=new_photo_ref.id,
-        **photo_doc
-    )
+    try:
+        # Upload image to Firebase Storage
+        # Extract base64 data from data URL (e.g., "data:image/jpeg;base64,...")
+        if photo.url.startswith("data:"):
+            header, base64_data = photo.url.split(",", 1)
+            image_data = base64.b64decode(base64_data)
+            
+            # Determine file extension from MIME type
+            mime_type = header.split(";")[0].split(":")[1]
+            extension = mime_type.split("/")[1]
+            
+            # Generate unique filename
+            filename = f"photos/{photo.userId}/{uuid.uuid4()}.{extension}"
+            
+            # Upload to Firebase Storage
+            blob = bucket.blob(filename)
+            blob.upload_from_string(image_data, content_type=mime_type)
+            
+            # Make the blob publicly accessible
+            blob.make_public()
+            
+            # Get the public URL
+            download_url = blob.public_url
+        else:
+            # If it's already a URL, use it directly
+            download_url = photo.url
+        
+        # Create photo document with URL instead of base64
+        photo_doc = {
+            "userId": photo.userId,
+            "url": download_url,
+            "title": photo.title,
+            "description": photo.description or "",
+            "memoryDate": photo.memoryDate,
+            "uploadDate": datetime.now().isoformat()
+        }
+        
+        update_time, new_photo_ref = db.collection("photos").add(photo_doc)
+        
+        return PhotoResponse(
+            id=new_photo_ref.id,
+            **photo_doc
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 # User endpoints
 @app.patch("/api/users/{user_id}", response_model=UserResponse)
