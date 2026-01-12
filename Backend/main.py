@@ -1,34 +1,38 @@
-from fastapi import FastAPI, HTTPException, status
+
+from fastapi import FastAPI, HTTPException, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from pymongo import AsyncMongoClient
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional, List
-from typing_extensions import Annotated
-from pydantic.functional_validators import BeforeValidator
 from dotenv import load_dotenv
 import os
 import bcrypt
-from bson import ObjectId
 from datetime import datetime
 import asyncio
+
+import firebase_admin
+from firebase_admin import credentials, firestore, auth
 
 # Load environment variables
 load_dotenv()
 
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
-DB_NAME = os.getenv("DB_NAME", "couplesApp")
+# --- Firebase Initialization ---
+# Make sure to download your Firebase service account key and rename it to
+# 'firebase-service-account.json' and place it in the 'Backend' directory.
+try:
+    cred = credentials.Certificate("Backend/firebase-service-account.json")
+    firebase_admin.initialize_app(cred)
+    print("✅ Firebase App initialized")
+except Exception as e:
+    print(f"❌ Firebase initialization error: {e}")
+    # You might want to exit the app if Firebase doesn't initialize
+    # For now, we'll let it run but endpoints will fail.
 
-# MongoDB client
-client = None
-db = None
+db = firestore.client()
 
-# Type for MongoDB ObjectId
-PyObjectId = Annotated[str, BeforeValidator(str)]
-
-# Pydantic Models
+# Pydantic Models (mostly unchanged, removed Mongo-specific parts)
 class UserSignup(BaseModel):
     email: EmailStr
-    password: str = Field(..., min_length=1)
+    password: str = Field(..., min_length=6) # Firebase requires a minimum of 6 characters for password
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -66,7 +70,7 @@ class PhotoResponse(BaseModel):
 # FastAPI app
 app = FastAPI(
     title="Couples App API",
-    description="Backend API for Couples Photo Gallery",
+    description="Backend API for Couples Photo Gallery (Firebase Edition)",
     version="1.0.0",
 )
 
@@ -84,50 +88,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Database functions
-async def connect_db():
-    global client, db
-    try:
-        client = AsyncMongoClient(MONGODB_URI)
-        db = client[DB_NAME]
-        
-        # Create indexes
-        await db.users.create_index("email", unique=True)
-        await db.photos.create_index("userId")
-        await db.photos.create_index([("memoryDate", -1)])
-        
-        print("✅ Connected to MongoDB")
-        return db
-    except Exception as e:
-        print(f"❌ MongoDB connection error: {e}")
-        raise e
-
+# --- Helper function to get Firestore db instance ---
 def get_db():
-    if db is None:
-        raise Exception("Database not initialized. Call connect_db first.")
     return db
-
-async def close_db():
-    global client
-    if client:
-        client.close()
-        print("MongoDB connection closed")
-
-# Event handlers
-@app.on_event("startup")
-async def startup_event():
-    """Initialize database connection on startup"""
-    try:
-        await connect_db()
-    except Exception as e:
-        print(f"⚠️ Warning: MongoDB connection failed - {e}")
-        print("🚀 FastAPI server started (without database)")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Close database connection on shutdown"""
-    await close_db()
-    print("👋 FastAPI server stopped")
 
 # Health check endpoint
 @app.get("/api/health")
@@ -137,144 +100,125 @@ async def health_check():
 
 # Authentication endpoints
 @app.post("/api/auth/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def signup(user: UserSignup):
-    """Register a new user"""
-    db = get_db()
-    
-    # Check if user exists
-    existing = await db.users.find_one({"email": user.email})
-    if existing:
+async def signup(user: UserSignup, db: firestore.client = Depends(get_db)):
+    """Register a new user using Firebase Authentication"""
+    try:
+        # Create user in Firebase Auth
+        user_record = auth.create_user(
+            email=user.email,
+            password=user.password
+        )
+        
+        # Create user profile in Firestore
+        user_data = {
+            "email": user.email,
+            "isPremium": False,
+            "specialDate": None,
+            "createdAt": datetime.now().isoformat()
+        }
+        db.collection("users").document(user_record.uid).set(user_data)
+        
+        return UserResponse(
+            uid=user_record.uid,
+            email=user.email,
+            isPremium=False,
+            specialDate=None
+        )
+    except auth.EmailAlreadyExistsError:
         raise HTTPException(status_code=400, detail="User already exists")
-    
-    # Hash password
-    hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt())
-    
-    # Create user
-    user_doc = {
-        "email": user.email,
-        "password": hashed_password,
-        "isPremium": False,
-        "specialDate": None,
-        "createdAt": datetime.now()
-    }
-    
-    result = await db.users.insert_one(user_doc)
-    
-    return UserResponse(
-        uid=str(result.inserted_id),
-        email=user.email,
-        isPremium=False,
-        specialDate=None
-    )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
 
-@app.post("/api/auth/login", response_model=UserResponse)
-async def login(user: UserLogin):
-    """Authenticate user with email and password"""
-    db = get_db()
-    
-    # Find user
-    user_doc = await db.users.find_one({"email": user.email})
-    if not user_doc:
-        raise HTTPException(status_code=401, detail="User not found. Please sign up.")
-    
-    # Verify password
-    if not bcrypt.checkpw(user.password.encode('utf-8'), user_doc["password"]):
-        raise HTTPException(status_code=401, detail="Invalid credentials.")
-    
-    return UserResponse(
-        uid=str(user_doc["_id"]),
-        email=user_doc["email"],
-        isPremium=user_doc.get("isPremium", False),
-        specialDate=user_doc.get("specialDate")
+@app.post("/api/auth/login")
+async def login_placeholder():
+    """Placeholder for Firebase login"""
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Login flow has changed. The client should now use the Firebase SDK to sign in (e.g., with email/password), get an ID token, and send that token to a new protected backend endpoint for verification. This endpoint only accepts email/password and cannot securely verify them with Firebase Admin SDK alone."
     )
+# Note for developer: A proper protected endpoint would look something like this:
+# from fastapi.security import OAuth2PasswordBearer
+# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+# @app.get("/api/user/me")
+# async def get_user_me(token: str = Depends(oauth2_scheme)):
+#     try:
+#         decoded_token = auth.verify_id_token(token)
+#         uid = decoded_token['uid']
+#         # fetch user data from Firestore
+#         return {"uid": uid}
+#     except auth.InvalidIdTokenError:
+#         raise HTTPException(status_code=401, detail="Invalid token")
+
 
 # Photo endpoints
 @app.get("/api/photos/{user_id}", response_model=List[PhotoResponse])
-async def get_photos(user_id: str):
-    """Get all photos for a specific user"""
-    db = get_db()
+async def get_photos(user_id: str, db: firestore.client = Depends(get_db)):
+    """Get all photos for a specific user from Firestore"""
+    photos_ref = db.collection("photos").where("userId", "==", user_id).order_by("memoryDate", direction=firestore.Query.DESCENDING)
+    docs = photos_ref.stream()
     
-    photos = await db.photos.find({"userId": user_id}).sort("memoryDate", -1).to_list(1000)
-    
-    return [
-        PhotoResponse(
-            id=str(photo["_id"]),
-            url=photo["url"],
-            title=photo["title"],
-            description=photo.get("description", ""),
-            memoryDate=photo["memoryDate"],
-            uploadDate=photo["uploadDate"]
-        )
-        for photo in photos
-    ]
+    photos = []
+    for doc in docs:
+        photo = doc.to_dict()
+        photo['id'] = doc.id
+        photos.append(PhotoResponse(**photo))
+    return photos
+
 
 @app.post("/api/photos", response_model=PhotoResponse, status_code=status.HTTP_201_CREATED)
-async def upload_photo(photo: PhotoUpload):
-    """Upload a new photo for a user"""
-    db = get_db()
-    
+async def upload_photo(photo: PhotoUpload, db: firestore.client = Depends(get_db)):
+    """Upload a new photo for a user to Firestore"""
     # Check if user exists
-    try:
-        user = await db.users.find_one({"_id": ObjectId(photo.userId)})
-    except Exception:
-        raise HTTPException(status_code=404, detail="User not found")
+    user_ref = db.collection("users").document(photo.userId)
+    user_doc = user_ref.get()
     
-    if not user:
+    if not user_doc.exists:
         raise HTTPException(status_code=404, detail="User not found")
-    
+        
+    user_data = user_doc.to_dict()
+
     # Check photo limit for free users
-    photo_count = await db.photos.count_documents({"userId": photo.userId})
-    if photo_count >= 100 and not user.get("isPremium", False):
+    photos_query = db.collection("photos").where("userId", "==", photo.userId)
+    photo_count = len(list(photos_query.stream())) # Note: this can be inefficient for large collections
+
+    if photo_count >= 100 and not user_data.get("isPremium", False):
         raise HTTPException(status_code=403, detail="limit_reached")
+
+    # Create photo document
+    photo_doc = photo.model_dump()
+    photo_doc["uploadDate"] = datetime.now().isoformat()
     
-    # Create photo
-    photo_doc = {
-        "userId": photo.userId,
-        "url": photo.url,
-        "title": photo.title,
-        "description": photo.description,
-        "memoryDate": photo.memoryDate,
-        "uploadDate": datetime.now().isoformat()
-    }
-    
-    result = await db.photos.insert_one(photo_doc)
+    update_time, new_photo_ref = db.collection("photos").add(photo_doc)
     
     return PhotoResponse(
-        id=str(result.inserted_id),
-        url=photo.url,
-        title=photo.title,
-        description=photo.description,
-        memoryDate=photo.memoryDate,
-        uploadDate=photo_doc["uploadDate"]
+        id=new_photo_ref.id,
+        **photo_doc
     )
 
 # User endpoints
 @app.patch("/api/users/{user_id}", response_model=UserResponse)
-async def update_user(user_id: str, updates: UserUpdate):
-    """Update user profile information"""
-    db = get_db()
+async def update_user(user_id: str, updates: UserUpdate, db: firestore.client = Depends(get_db)):
+    """Update user profile information in Firestore"""
+    user_ref = db.collection("users").document(user_id)
     
     try:
-        # Prepare update data
         update_data = updates.model_dump(exclude_unset=True)
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No update data provided")
+
+        user_ref.update(update_data)
         
-        result = await db.users.find_one_and_update(
-            {"_id": ObjectId(user_id)},
-            {"$set": update_data},
-            return_document=True
-        )
+        updated_doc = user_ref.get()
+        if not updated_doc.exists:
+             raise HTTPException(status_code=404, detail="User not found")
         
-        if not result:
-            raise HTTPException(status_code=404, detail="User not found")
-        
+        user_data = updated_doc.to_dict()
         return UserResponse(
-            uid=str(result["_id"]),
-            email=result["email"],
-            isPremium=result.get("isPremium", False),
-            specialDate=result.get("specialDate")
+            uid=user_id,
+            email=user_data["email"],
+            isPremium=user_data.get("isPremium", False),
+            specialDate=user_data.get("specialDate")
         )
-    except HTTPException:
-        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -287,4 +231,5 @@ async def process_payment(user_id: str):
 
 if __name__ == "__main__":
     import uvicorn
+    # Make sure to set the port to 5000 or whatever your frontend expects
     uvicorn.run(app, host="0.0.0.0", port=5000)
