@@ -25,9 +25,9 @@ try:
     firebase_admin.initialize_app(cred, {
         'storageBucket': 'coupleasapp.appspot.com'
     })
-    print("✅ Firebase App initialized")
+    print("[SUCCESS] Firebase App initialized")
 except Exception as e:
-    print(f"❌ Firebase initialization error: {e}")
+    print(f"[ERROR] Firebase initialization error: {e}")
     # You might want to exit the app if Firebase doesn't initialize
     # For now, we'll let it run but endpoints will fail.
 

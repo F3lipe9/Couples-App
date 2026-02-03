@@ -61,15 +61,15 @@ export const UpgradePage: React.FC<UpgradePageProps> = ({
 
         <ul className="text-left space-y-3 mb-8">
           <li className="flex items-center text-slate-700">
-            <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mr-3 text-green-600 text-xs">✓</div>
+            <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mr-3 text-green-600 text-xs"></div>
             Unlimited photo uploads
           </li>
           <li className="flex items-center text-slate-700">
-            <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mr-3 text-green-600 text-xs">✓</div>
+            <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mr-3 text-green-600 text-xs"></div>
             High-quality storage
           </li>
           <li className="flex items-center text-slate-700">
-            <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mr-3 text-green-600 text-xs">✓</div>
+            <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mr-3 text-green-600 text-xs"></div>
             Support future development
           </li>
         </ul>

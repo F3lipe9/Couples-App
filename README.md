@@ -1,18 +1,18 @@
-#  Couples App
+# Couples App
 
 A romantic photo gallery application for couples featuring special date unlocking, secure authentication, and cloud storage. Built with FastAPI (Python) backend and React + TypeScript frontend, powered by Firebase.
 
-##  Features
+## Features
 
--  **Secure Authentication** - Firebase Auth with email/password
--  **Photo Gallery** - Upload and view cherished memories
--  **Special Date Lock** - Use your special date as an unlock code
--  **Premium Tier** - Upgrade for unlimited photo storage (100 photo limit for free users)
--  **Modern UI** - Clean, responsive design with Lucide icons
--  **Fast Performance** - Vite for frontend, FastAPI for backend
--  **Cloud Storage** - Firebase Storage for reliable photo hosting
+- **Secure Authentication** - Firebase Auth with email/password
+- **Photo Gallery** - Upload and view cherished memories
+- **Special Date Lock** - Use your special date as an unlock code
+- **Premium Tier** - Upgrade for unlimited photo storage (100 photo limit for free users)
+- **Modern UI** - Clean, responsive design with Lucide icons
+- **Fast Performance** - Vite for frontend, FastAPI for backend
+- **Cloud Storage** - Firebase Storage for reliable photo hosting
 
-##  Project Structure
+## Project Structure
 
 ```
 couplesApp/
@@ -45,7 +45,7 @@ couplesApp/
 └── .gitignore                       # Root-level git ignore
 ```
 
-##  Prerequisites
+## Prerequisites
 
 - **Node.js** v18 or higher
 - **Python** 3.9 or higher
@@ -67,9 +67,9 @@ couplesApp/
 7. Copy your Storage Bucket name (format: `yourproject.appspot.com`)
 8. Update `storageBucket` in `Backend/main.py` (line ~25) with your bucket name
 
-⚠️ **IMPORTANT**: Never commit `firebase-service-account.json` to git!
+**IMPORTANT**: Never commit `firebase-service-account.json` to git!
 
-### 2.  Install Backend Dependencies
+### 2. Install Backend Dependencies
 
 ```bash
 cd Backend
@@ -83,7 +83,7 @@ pip install -r requirements.txt
 - Bcrypt - Password hashing
 - Uvicorn - ASGI server
 
-### 3.  Install Frontend Dependencies
+### 3. Install Frontend Dependencies
 
 ```bash
 cd FrontEnd
@@ -96,7 +96,7 @@ npm install
 - Vite - Build tool & dev server
 - Lucide React - Icon library
 
-### 4.  Configure Environment Variables
+### 4. Configure Environment Variables
 
 **Backend** - Create `Backend/.env`:
 ```env
@@ -109,10 +109,10 @@ PORT=5000
 VITE_API_URL=http://localhost:5000/api
 ```
 
-### 5. ▶ Run the Application
+### 5. Run the Application
 
 **Terminal 1 - Backend Server:**
-```🔌 API Endpoints
+## API Endpoints
 
 ### Authentication
 - `POST /api/auth/signup` - Create new user account
@@ -129,7 +129,7 @@ VITE_API_URL=http://localhost:5000/api
 
 **Interactive API Documentation**: Visit `http://localhost:5000/docs` when backend is running
 
-##  Tech Stack
+## Tech Stack
 
 ### Backend
 - **FastAPI** - Modern async Python web framework
@@ -151,7 +151,7 @@ VITE_API_URL=http://localhost:5000/api
 - **Firebase Storage** - Cloud file storage
 - **Firebase Auth** - User authentication service
 
-##  Architecture
+## Architecture
 
 - **Frontend**: React SPA with TypeScript for type safety
 - **Backend**: RESTful API with FastAPI (async/await)
@@ -159,7 +159,7 @@ VITE_API_URL=http://localhost:5000/api
 - **Storage**: Firebase Storage (cloud object storage)
 - **Auth**: Firebase Authentication with custom backend validation
 
-##  Deployment
+## Deployment
 
 ### Backend Deployment
 1. Set up hosting (Railway, Render, Google Cloud Run, etc.)
@@ -172,17 +172,17 @@ VITE_API_URL=http://localhost:5000/api
 2. Build: `npm run build`
 3. Deploy `dist/` folder to hosting (Vercel, Netlify, Firebase Hosting)
 
-##  Security Notes
+## Security Notes
 
--  All secrets are gitignored (`.env`, `firebase-service-account.json`)
--  Passwords are hashed with bcrypt
--  CORS middleware configured for cross-origin requests
--  For production, use proper JWT tokens
--  Enable Firebase security rules for Firestore and Storage
--  Use HTTPS in production
--  Implement rate limiting on sensitive endpoints
+- All secrets are gitignored (`.env`, `firebase-service-account.json`)
+- Passwords are hashed with bcrypt
+- CORS middleware configured for cross-origin requests
+- For production, use proper JWT tokens
+- Enable Firebase security rules for Firestore and Storage
+- Use HTTPS in production
+- Implement rate limiting on sensitive endpoints
 
-##  Development Notes
+## Development Notes
 
 - Backend auto-reloads on code changes (FastAPI's uvicorn reload)
 - Frontend has HMR (Hot Module Replacement) via Vite
@@ -190,7 +190,7 @@ VITE_API_URL=http://localhost:5000/api
 - Free users limited to 100 photos
 - Premium users get unlimited storage
 
-##  Troubleshooting
+## Troubleshooting
 
 **Firebase initialization error:**
 - Verify `firebase-service-account.json` exists in `Backend/`
@@ -204,13 +204,13 @@ VITE_API_URL=http://localhost:5000/api
 - Backend: Run `pip install -r requirements.txt`
 - Frontend: Run `npm install`
 
-## 📄 License
+## License
 
 This project is private and proprietary.
 
 ---
 
-Made with Love for couples everywhereongoDB driver
+Made with love for couples everywhereongoDB driver
 - Bcrypt - Password hashing
 - Pydantic - Data validation
 - Uvicorn - ASGI server
