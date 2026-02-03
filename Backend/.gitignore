@@ -8,8 +8,9 @@ __pycache__/
 venv/
 env/
 
-# Environment variables
+# Environment variables (API keys, secrets, configuration)
 .env
+.env.*
 .env.local
 .env.*.local
 
