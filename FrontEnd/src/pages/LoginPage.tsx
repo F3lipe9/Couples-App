@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { firebaseAuth } from '../firebase';
 import { Button, Input } from '../components';
 import { User, ViewType } from '../types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api';
 
 interface LoginPageProps {
   onNavigate: (view: ViewType) => void;
-  onLogin: (user: User) => void;
+  onLogin: (user: User, firebaseUser: import('firebase/auth').User) => void;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLogin }) => {
@@ -18,20 +20,27 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLogin }) => 
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+      // Sign in via Firebase client SDK
+      const result = await signInWithEmailAndPassword(firebaseAuth, email, password);
+      const fbUser = result.user;
+      const token = await fbUser.getIdToken();
+
+      // Fetch app user from our API
+      const response = await fetch(`${API_URL}/me`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.detail || 'Login failed');
       }
-      const user = await response.json();
-      onLogin(user);
-      onNavigate('unlock'); // Redirect to Unlock Gate
+      const appUser: User = await response.json();
+      onLogin(appUser, fbUser);
     } catch (err: any) {
-      alert(err.message);
+      // Surface friendly Firebase error messages
+      const msg = err.code === 'auth/invalid-credential'
+        ? 'Incorrect email or password.'
+        : err.message || 'Login failed';
+      alert(msg);
     } finally {
       setLoading(false);
     }
@@ -50,7 +59,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLogin }) => 
           <Button isLoading={loading} type="submit">Log In</Button>
         </form>
         <p className="text-center mt-6 text-sm text-slate-500">
-          No account? <button onClick={() => onNavigate('signup')} className="text-rose-500 font-semibold hover:underline">Create one</button>
+          No account?{' '}
+          <button onClick={() => onNavigate('signup')} className="text-rose-500 font-semibold hover:underline">
+            Create one
+          </button>
         </p>
       </div>
     </div>

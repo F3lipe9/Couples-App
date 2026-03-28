@@ -3,6 +3,8 @@ export interface User {
   email: string;
   isPremium: boolean;
   specialDate: string | null;
+  storageUsedBytes: number;    // ← add this
+  storageLimitBytes: number;   // ← add this
 }
 
 export interface Photo {

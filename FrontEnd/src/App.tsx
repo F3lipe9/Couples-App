@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { firebaseAuth } from './firebase';
 import {
   SignupPage,
   LoginPage,
@@ -11,38 +13,67 @@ import {
 } from './pages';
 import { User, ViewType } from './types';
 
-export const App: React.FC = () => {
-  // Views: 'signup', 'login', 'set-date', 'unlock', 'gallery', 'upload', 'upgrade'
-  const [view, setView] = useState<ViewType>('signup');
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api';
 
-  // Initial Auth Check
+export const App: React.FC = () => {
+  const [view, setView]                 = useState<ViewType>('signup');
+  const [user, setUser]                 = useState<User | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
+  const [loading, setLoading]           = useState(true);
+  const [darkMode, setDarkMode]         = useState<boolean>(() => {
+    return localStorage.getItem('couple_dark_mode') === 'true';
+  });
+
+  const toggleDarkMode = () => {
+    setDarkMode((prev) => {
+      const next = !prev;
+      localStorage.setItem('couple_dark_mode', String(next));
+      return next;
+    });
+  };
+
   useEffect(() => {
-    const checkAuth = async () => {
-      // Basic session persistence check via local storage
-      const stored = localStorage.getItem('couple_app_user');
-      if (stored) {
-        setUser(JSON.parse(stored));
-        // If user is logged in, where do they go? 
-        // We always force them to the "Unlock" gate for security/romance
-        setView('unlock'); 
+    const unsubscribe = onAuthStateChanged(firebaseAuth, async (fbUser) => {
+      if (fbUser) {
+        setFirebaseUser(fbUser);
+        try {
+          const token = await fbUser.getIdToken();
+          const res = await fetch(`${API_URL}/me`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const appUser: User = await res.json();
+            setUser(appUser);
+            setView(appUser.specialDate ? 'unlock' : 'set-date');
+          } else {
+            setUser(null);
+            setFirebaseUser(null);
+            setView('signup');
+          }
+        } catch {
+          setUser(null);
+          setFirebaseUser(null);
+          setView('signup');
+        }
       } else {
-        setView('signup'); // Default to signup for new users/demo
+        setFirebaseUser(null);
+        setUser(null);
+        setView('signup');
       }
       setLoading(false);
-    };
-    checkAuth();
+    });
+
+    return unsubscribe;
   }, []);
 
   const handleUpdateUser = (updatedUser: User) => {
     setUser(updatedUser);
-    localStorage.setItem('couple_app_user', JSON.stringify(updatedUser));
   };
 
-  const handleLogin = (loggedInUser: User) => {
+  const handleLogin = (loggedInUser: User, fbUser: FirebaseUser) => {
     setUser(loggedInUser);
-    localStorage.setItem('couple_app_user', JSON.stringify(loggedInUser));
+    setFirebaseUser(fbUser);
+    setView(loggedInUser.specialDate ? 'unlock' : 'set-date');
   };
 
   if (loading) {
@@ -55,13 +86,48 @@ export const App: React.FC = () => {
 
   return (
     <div className="antialiased text-slate-800">
-      {view === 'signup' && <SignupPage onLogin={handleLogin} onNavigate={setView} />}
-      {view === 'login' && <LoginPage onLogin={handleLogin} onNavigate={setView} />}
-      {view === 'set-date' && user && <SetSpecialDatePage user={user} onUpdateUser={handleUpdateUser} onNavigate={setView} />}
-      {view === 'unlock' && user && <UnlockDatePage user={user} onNavigate={setView} />}
-      {view === 'gallery' && user && <GalleryPage user={user} onNavigate={setView} />}
-      {view === 'upload' && user && <UploadPage user={user} onNavigate={setView} />}
-      {view === 'upgrade' && user && <UpgradePage user={user} onUpdateUser={handleUpdateUser} onNavigate={setView} />}
+      {view === 'signup' && (
+        <SignupPage onLogin={handleLogin} onNavigate={setView} />
+      )}
+      {view === 'login' && (
+        <LoginPage onLogin={handleLogin} onNavigate={setView} />
+      )}
+      {view === 'set-date' && user && firebaseUser && (
+        <SetSpecialDatePage
+          user={user}
+          firebaseUser={firebaseUser}
+          onUpdateUser={handleUpdateUser}
+          onNavigate={setView}
+        />
+      )}
+      {view === 'unlock' && user && (
+        <UnlockDatePage user={user} onNavigate={setView} />
+      )}
+      {view === 'gallery' && user && firebaseUser && (
+        <GalleryPage
+          user={user}
+          firebaseUser={firebaseUser}
+          darkMode={darkMode}
+          toggleDarkMode={toggleDarkMode}
+          onNavigate={setView}
+        />
+      )}
+      {view === 'upload' && user && firebaseUser && (
+        <UploadPage
+          user={user}
+          firebaseUser={firebaseUser}
+          darkMode={darkMode}
+          onNavigate={setView}
+        />
+      )}
+      {view === 'upgrade' && user && firebaseUser && (
+        <UpgradePage
+          user={user}
+          firebaseUser={firebaseUser}
+          onUpdateUser={handleUpdateUser}
+          onNavigate={setView}
+        />
+      )}
     </div>
   );
 };

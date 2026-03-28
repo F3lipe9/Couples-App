@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { firebaseAuth } from '../firebase';
 import { Heart } from 'lucide-react';
 import { Button, Input } from '../components';
 import { User, ViewType } from '../types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api';
 
 interface SignupPageProps {
   onNavigate: (view: ViewType) => void;
-  onLogin: (user: User) => void;
+  onLogin: (user: User, firebaseUser: import('firebase/auth').User) => void;
 }
 
 export const SignupPage: React.FC<SignupPageProps> = ({ onNavigate, onLogin }) => {
@@ -21,20 +23,39 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onNavigate, onLogin }) =
     if (password !== confirm) return alert("Passwords don't match!");
     setLoading(true);
     try {
+      // 1. Create Firebase Auth user via client SDK
+      const result = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+      const fbUser = result.user;
+      const token = await fbUser.getIdToken();
+
+      // 2. Create the Firestore user doc via our API
       const response = await fetch(`${API_URL}/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
       });
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.detail || 'Signup failed');
       }
-      const user = await response.json();
-      onLogin(user); // Set user in state
-      onNavigate('set-date'); // Redirect to Setup
+      const appUser: User = await response.json();
+
+      // 3. Fetch the full user from /me using the token
+      //    (ensures storageUsedBytes / storageLimitBytes are included)
+      const meRes = await fetch(`${API_URL}/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const fullUser: User = meRes.ok ? await meRes.json() : appUser;
+
+      onLogin(fullUser, fbUser);
     } catch (err: any) {
-      alert(err.message);
+      // Surface friendly Firebase error messages
+      const msg = err.code === 'auth/email-already-in-use'
+        ? 'An account with this email already exists.'
+        : err.code === 'auth/weak-password'
+        ? 'Password must be at least 6 characters.'
+        : err.message || 'Signup failed';
+      alert(msg);
     } finally {
       setLoading(false);
     }
@@ -57,7 +78,10 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onNavigate, onLogin }) =
           <Button isLoading={loading} type="submit">Create Account</Button>
         </form>
         <p className="text-center mt-6 text-sm text-slate-500">
-          Already have an account? <button onClick={() => onNavigate('login')} className="text-rose-500 font-semibold hover:underline">Log in</button>
+          Already have an account?{' '}
+          <button onClick={() => onNavigate('login')} className="text-rose-500 font-semibold hover:underline">
+            Log in
+          </button>
         </p>
       </div>
     </div>
