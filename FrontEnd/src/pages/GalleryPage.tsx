@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Loader2, Camera, Plus, Trash2, X, CheckCircle2, Moon, Sun } from 'lucide-react';
-import { signOut } from 'firebase/auth';
+import { Loader2, Camera, Plus, Trash2, X, CheckCircle2 } from 'lucide-react';
 import { User as FirebaseUser } from 'firebase/auth';
-import { firebaseAuth } from '../firebase';
+import { Navbar } from '../components/index';
 import { User, Photo, ViewType } from '../types';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api';
@@ -12,6 +11,7 @@ interface GalleryPageProps {
   firebaseUser: FirebaseUser;
   darkMode: boolean;
   toggleDarkMode: () => void;
+  currentView: ViewType;
   onNavigate: (view: ViewType) => void;
 }
 
@@ -20,6 +20,7 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({
   firebaseUser,
   darkMode,
   toggleDarkMode,
+  currentView,
   onNavigate,
 }) => {
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -32,50 +33,48 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({
   // ── Theme tokens ──────────────────────────────────────────────────────────
   const t = darkMode
     ? {
-        page:        'bg-slate-900',
-        header:      'bg-slate-900/80 border-white/10',
-        title:       'text-white',
-        subtitle:    'text-slate-400',
-        selectBtn:   'bg-white/10 text-slate-300 hover:bg-white/20',
-        selectActive:'bg-rose-500/20 text-rose-400',
-        signOutBtn:  'text-slate-400 hover:bg-white/10',
-        card:        'bg-slate-800 border-slate-700',
-        cardTitle:   'text-white',
-        cardDesc:    'text-slate-400',
-        cardImgBg:   'bg-slate-700',
-        emptyIcon:   'bg-white/10',
-        emptyTitle:  'text-slate-300',
-        emptyDesc:   'text-slate-500',
-        bottomBar:   'bg-slate-900 border-white/10',
-        bottomText:  'text-slate-400',
-        deleteDisabled: 'bg-white/10 text-slate-500',
-        dialog:      'bg-slate-800',
-        dialogTitle: 'text-white',
-        dialogDesc:  'text-slate-400',
-        dialogCancel:'border-white/10 text-slate-300 hover:bg-white/10',
+        page:          'bg-slate-900',
+        header:        'bg-slate-900/80 border-white/10',
+        title:         'text-white',
+        subtitle:      'text-slate-400',
+        selectBtn:     'bg-white/10 text-slate-300 hover:bg-white/20',
+        selectActive:  'bg-rose-500/20 text-rose-400',
+        card:          'bg-slate-800 border-slate-700',
+        cardTitle:     'text-white',
+        cardDesc:      'text-slate-400',
+        cardImgBg:     'bg-slate-700',
+        emptyIcon:     'bg-white/10',
+        emptyTitle:    'text-slate-300',
+        emptyDesc:     'text-slate-500',
+        bottomBar:     'bg-slate-900 border-white/10',
+        bottomText:    'text-slate-400',
+        deleteDisabled:'bg-white/10 text-slate-500',
+        dialog:        'bg-slate-800',
+        dialogTitle:   'text-white',
+        dialogDesc:    'text-slate-400',
+        dialogCancel:  'border-white/10 text-slate-300 hover:bg-white/10',
       }
     : {
-        page:        'bg-slate-50',
-        header:      'bg-white/80 border-slate-200',
-        title:       'text-slate-800',
-        subtitle:    'text-slate-500',
-        selectBtn:   'bg-slate-100 text-slate-600 hover:bg-slate-200',
-        selectActive:'bg-rose-100 text-rose-600',
-        signOutBtn:  'text-slate-400 hover:bg-slate-100',
-        card:        'bg-white border-slate-100',
-        cardTitle:   'text-slate-800',
-        cardDesc:    'text-slate-500',
-        cardImgBg:   'bg-slate-100',
-        emptyIcon:   'bg-rose-100',
-        emptyTitle:  'text-slate-700',
-        emptyDesc:   'text-slate-500',
-        bottomBar:   'bg-white border-slate-200',
-        bottomText:  'text-slate-500',
-        deleteDisabled: 'bg-slate-100 text-slate-400',
-        dialog:      'bg-white',
-        dialogTitle: 'text-slate-800',
-        dialogDesc:  'text-slate-500',
-        dialogCancel:'border-slate-200 text-slate-600 hover:bg-slate-50',
+        page:          'bg-slate-50',
+        header:        'bg-white/80 border-slate-200',
+        title:         'text-slate-800',
+        subtitle:      'text-slate-500',
+        selectBtn:     'bg-slate-100 text-slate-600 hover:bg-slate-200',
+        selectActive:  'bg-rose-100 text-rose-600',
+        card:          'bg-white border-slate-100',
+        cardTitle:     'text-slate-800',
+        cardDesc:      'text-slate-500',
+        cardImgBg:     'bg-slate-100',
+        emptyIcon:     'bg-rose-100',
+        emptyTitle:    'text-slate-700',
+        emptyDesc:     'text-slate-500',
+        bottomBar:     'bg-white border-slate-200',
+        bottomText:    'text-slate-500',
+        deleteDisabled:'bg-slate-100 text-slate-400',
+        dialog:        'bg-white',
+        dialogTitle:   'text-slate-800',
+        dialogDesc:    'text-slate-500',
+        dialogCancel:  'border-slate-200 text-slate-600 hover:bg-slate-50',
       };
 
   const fetchPhotos = async () => {
@@ -97,10 +96,6 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({
   useEffect(() => {
     fetchPhotos();
   }, [user.uid]);
-
-  const handleSignOut = async () => {
-    await signOut(firebaseAuth);
-  };
 
   const toggleSelectMode = () => {
     setSelectMode((prev) => !prev);
@@ -142,7 +137,7 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({
 
   return (
     <div className={`min-h-screen ${t.page} pb-32 relative overflow-hidden`}>
-      {/* Dark mode background blobs — matching UnlockDatePage */}
+      {/* Dark mode background blobs */}
       {darkMode && (
         <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
           <div className="absolute top-10 left-10 w-32 h-32 bg-rose-500 rounded-full blur-3xl" />
@@ -156,41 +151,21 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({
           <h1 className={`text-xl font-bold ${t.title} font-serif`}>Our Memories</h1>
           <p className={`text-xs ${t.subtitle}`}>{photos.length} moments captured</p>
         </div>
-        <div className="flex items-center gap-2">
-          {/* Dark mode toggle */}
-          <button
-            onClick={toggleDarkMode}
-            className={`p-2 rounded-full transition-colors ${t.signOutBtn}`}
-            title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-          >
-            {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          </button>
-
-          {/* Select toggle */}
-          <button
-            onClick={toggleSelectMode}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              selectMode ? t.selectActive : t.selectBtn
-            }`}
-          >
-            {selectMode ? (
-              <span className="flex items-center gap-1">
-                <X className="w-3.5 h-3.5" /> Cancel
-              </span>
-            ) : (
-              'Select'
-            )}
-          </button>
-
-          {!selectMode && (
-            <button
-              onClick={handleSignOut}
-              className={`p-2 rounded-full transition-colors ${t.signOutBtn}`}
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
+        {/* Select toggle */}
+        <button
+          onClick={toggleSelectMode}
+          className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+            selectMode ? t.selectActive : t.selectBtn
+          }`}
+        >
+          {selectMode ? (
+            <span className="flex items-center gap-1">
+              <X className="w-3.5 h-3.5" /> Cancel
+            </span>
+          ) : (
+            'Select'
           )}
-        </div>
+        </button>
       </header>
 
       {/* Grid */}
@@ -216,10 +191,7 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({
                 onClick={() => togglePhoto(photo.id)}
                 className={`${t.card} rounded-2xl overflow-hidden shadow-sm border-2 transition-all group relative
                   ${selectMode ? 'cursor-pointer' : ''}
-                  ${isSelected
-                    ? 'border-rose-500 shadow-rose-500/20 shadow-md scale-[0.98]'
-                    : ''
-                  }`}
+                  ${isSelected ? 'border-rose-500 shadow-rose-500/20 shadow-md scale-[0.98]' : ''}`}
               >
                 <div className={`aspect-[4/3] overflow-hidden ${t.cardImgBg} relative`}>
                   <img
@@ -253,9 +225,9 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({
         )}
       </div>
 
-      {/* Bottom bar — select mode */}
+      {/* Bottom bar — select mode (sits above Navbar) */}
       {selectMode && (
-        <div className={`fixed bottom-0 left-0 right-0 ${t.bottomBar} border-t px-6 py-4 flex items-center justify-between z-40 shadow-lg`}>
+        <div className={`fixed bottom-16 left-0 right-0 ${t.bottomBar} border-t px-6 py-4 flex items-center justify-between z-40 shadow-lg`}>
           <p className={`text-sm ${t.bottomText}`}>
             {selected.size === 0
               ? 'Tap photos to select'
@@ -267,7 +239,7 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({
             className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
               selected.size > 0
                 ? 'bg-red-500 text-white hover:bg-red-600'
-                : t.deleteDisabled + ' cursor-not-allowed'
+                : `${t.deleteDisabled} cursor-not-allowed`
             }`}
           >
             <Trash2 className="w-4 h-4" />
@@ -276,15 +248,24 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({
         </div>
       )}
 
-      {/* Floating Add Button */}
+      {/* Floating Add Button — hidden in select mode */}
       {!selectMode && (
         <button
           onClick={() => onNavigate('upload')}
-          className="fixed bottom-6 right-6 w-14 h-14 bg-rose-500 rounded-full shadow-lg shadow-rose-500/30 flex items-center justify-center text-white hover:bg-rose-600 transition-transform hover:scale-105 active:scale-95 z-40"
+          className="fixed bottom-20 right-6 w-14 h-14 bg-rose-500 rounded-full shadow-lg shadow-rose-500/30 flex items-center justify-center text-white hover:bg-rose-600 transition-transform hover:scale-105 active:scale-95 z-40"
         >
           <Plus className="w-7 h-7" />
         </button>
       )}
+
+      {/* Navbar */}
+      <Navbar
+        variant="full"
+        currentView={currentView}
+        darkMode={darkMode}
+        toggleDarkMode={toggleDarkMode}
+        onNavigate={onNavigate}
+      />
 
       {/* Confirmation Dialog */}
       {showConfirm && (

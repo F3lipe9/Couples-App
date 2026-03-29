@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Image as ImageIcon } from 'lucide-react';
 import { User as FirebaseUser } from 'firebase/auth';
-import { Button, Input, StorageBar } from '../components';
+import { Button, Input, StorageBar } from '../components/index';
 import { User, ViewType } from '../types';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api';

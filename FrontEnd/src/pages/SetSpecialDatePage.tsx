@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Calendar } from 'lucide-react';
 import { User as FirebaseUser } from 'firebase/auth';
-import { Button } from '../components';
+import { Button } from '../components/index';
 import { User, ViewType } from '../types';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api';

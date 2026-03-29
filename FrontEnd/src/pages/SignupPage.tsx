@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { firebaseAuth } from '../firebase';
 import { Heart } from 'lucide-react';
-import { Button, Input } from '../components';
+import { Button, Input } from '../components/index';
 import { User, ViewType } from '../types';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api';

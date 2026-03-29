@@ -9,7 +9,8 @@ import {
   UnlockDatePage,
   GalleryPage,
   UploadPage,
-  UpgradePage
+  UpgradePage,
+  TogetherPage,
 } from './pages';
 import { User, ViewType } from './types';
 
@@ -66,9 +67,7 @@ export const App: React.FC = () => {
     return unsubscribe;
   }, []);
 
-  const handleUpdateUser = (updatedUser: User) => {
-    setUser(updatedUser);
-  };
+  const handleUpdateUser = (updatedUser: User) => setUser(updatedUser);
 
   const handleLogin = (loggedInUser: User, fbUser: FirebaseUser) => {
     setUser(loggedInUser);
@@ -83,6 +82,13 @@ export const App: React.FC = () => {
       </div>
     );
   }
+
+  const sharedNavProps = {
+    darkMode,
+    toggleDarkMode,
+    currentView: view,
+    onNavigate: setView,
+  };
 
   return (
     <div className="antialiased text-slate-800">
@@ -101,15 +107,23 @@ export const App: React.FC = () => {
         />
       )}
       {view === 'unlock' && user && (
-        <UnlockDatePage user={user} onNavigate={setView} />
+        <UnlockDatePage
+          user={user}
+          {...sharedNavProps}
+        />
+      )}
+      {view === 'home' && user && firebaseUser && (
+        <TogetherPage
+          user={user}
+          firebaseUser={firebaseUser}
+          {...sharedNavProps}
+        />
       )}
       {view === 'gallery' && user && firebaseUser && (
         <GalleryPage
           user={user}
           firebaseUser={firebaseUser}
-          darkMode={darkMode}
-          toggleDarkMode={toggleDarkMode}
-          onNavigate={setView}
+          {...sharedNavProps}
         />
       )}
       {view === 'upload' && user && firebaseUser && (
