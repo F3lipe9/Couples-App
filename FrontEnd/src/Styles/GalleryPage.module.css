@@ -1,0 +1,406 @@
+/* ── Page ────────────────────────────────────────────────────────────────── */
+
+.page {
+  min-height: 100vh;
+  padding-bottom: 8rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.pageLight { background-color: #fff1f2; }
+.pageDark  { background-color: #0f172a; }
+
+/* ── Dark blobs ──────────────────────────────────────────────────────────── */
+
+.blobs {
+  position: absolute;
+  inset: 0;
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.blobTopLeft {
+  position: absolute;
+  top: 2.5rem;
+  left: 2.5rem;
+  width: 8rem;
+  height: 8rem;
+  background-color: #f43f5e;
+  border-radius: 50%;
+  filter: blur(48px);
+}
+
+.blobBottomRight {
+  position: absolute;
+  bottom: 2.5rem;
+  right: 2.5rem;
+  width: 12rem;
+  height: 12rem;
+  background-color: #a855f7;
+  border-radius: 50%;
+  filter: blur(48px);
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.header {
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.headerLight {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-bottom-color: #e2e8f0;
+}
+
+.headerDark {
+  background-color: rgba(15, 23, 42, 0.8);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.headerTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: serif;
+}
+
+.headerTitleLight { color: #1e293b; }
+.headerTitleDark  { color: #ffffff; }
+
+.headerSubtitle {
+  font-size: 0.75rem;
+}
+
+.headerSubtitleLight { color: #64748b; }
+.headerSubtitleDark  { color: #94a3b8; }
+
+/* ── Select button ───────────────────────────────────────────────────────── */
+
+.selectBtn {
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.selectBtnLight         { background-color: #f1f5f9; color: #475569; }
+.selectBtnLight:hover   { background-color: #e2e8f0; }
+.selectBtnDark          { background-color: rgba(255,255,255,0.1); color: #cbd5e1; }
+.selectBtnDark:hover    { background-color: rgba(255,255,255,0.2); }
+.selectBtnActiveLight   { background-color: #ffe4e6; color: #e11d48; }
+.selectBtnActiveDark    { background-color: rgba(244,63,94,0.2); color: #fb7185; }
+
+/* ── Grid ────────────────────────────────────────────────────────────────── */
+
+.grid {
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+  position: relative;
+  z-index: 10;
+}
+
+@media (min-width: 640px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1024px) {
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ── Photo card ──────────────────────────────────────────────────────────── */
+
+.card {
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  border-width: 2px;
+  border-style: solid;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.cardLight          { background-color: #ffffff; border-color: #f1f5f9; }
+.cardDark           { background-color: #1e293b; border-color: #334155; }
+.cardSelected       { border-color: #f43f5e !important; transform: scale(0.98); box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2); }
+.cardSelectable     { cursor: pointer; }
+
+.cardImgWrap {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  position: relative;
+}
+
+.cardImgBgLight { background-color: #f1f5f9; }
+.cardImgBgDark  { background-color: #334155; }
+
+.cardImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s;
+}
+
+.card:hover .cardImg { transform: scale(1.05); }
+
+.cardDateOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+  padding: 1rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: flex-end;
+}
+
+.card:hover .cardDateOverlay { opacity: 1; }
+
+.cardDate {
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.cardSelectedOverlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(244, 63, 94, 0.1);
+  pointer-events: none;
+}
+
+.cardCheckmark {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  color: #f43f5e;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+}
+
+.cardBody { padding: 1rem; }
+
+.cardTitle {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardTitleLight { color: #1e293b; }
+.cardTitleDark  { color: #ffffff; }
+
+.cardDesc {
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cardDescLight { color: #64748b; }
+.cardDescDark  { color: #94a3b8; }
+
+/* ── Empty state ─────────────────────────────────────────────────────────── */
+
+.empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 5rem 0;
+}
+
+.emptyIconWrap {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.emptyIconWrapLight { background-color: #ffe4e6; }
+.emptyIconWrapDark  { background-color: rgba(255,255,255,0.1); }
+
+.emptyTitle {
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+.emptyTitleLight { color: #374151; }
+.emptyTitleDark  { color: #cbd5e1; }
+
+.emptyDesc {
+  margin-top: 0.25rem;
+}
+
+.emptyDescLight { color: #64748b; }
+.emptyDescDark  { color: #64748b; }
+
+/* ── Select bottom bar ───────────────────────────────────────────────────── */
+
+.bottomBar {
+  position: fixed;
+  bottom: 4rem;
+  left: 0;
+  right: 0;
+  border-top-width: 1px;
+  border-top-style: solid;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 40;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+}
+
+.bottomBarLight { background-color: #ffffff; border-top-color: #e2e8f0; }
+.bottomBarDark  { background-color: #0f172a; border-top-color: rgba(255,255,255,0.1); }
+
+.bottomBarText {
+  font-size: 0.875rem;
+}
+
+.bottomBarTextLight { color: #64748b; }
+.bottomBarTextDark  { color: #94a3b8; }
+
+.deleteBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.deleteBtnActive          { background-color: #ef4444; color: #ffffff; }
+.deleteBtnActive:hover    { background-color: #dc2626; }
+.deleteBtnDisabledLight   { background-color: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
+.deleteBtnDisabledDark    { background-color: rgba(255,255,255,0.1); color: #64748b; cursor: not-allowed; }
+
+/* ── FAB ─────────────────────────────────────────────────────────────────── */
+
+.fab {
+  position: fixed;
+  bottom: 5rem;
+  right: 1.5rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  background-color: #f43f5e;
+  border-radius: 50%;
+  box-shadow: 0 8px 24px rgba(244, 63, 94, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+  z-index: 40;
+}
+
+.fab:hover  { background-color: #e11d48; transform: scale(1.05); }
+.fab:active { transform: scale(0.95); }
+
+/* ── Confirm dialog ──────────────────────────────────────────────────────── */
+
+.dialogOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1.5rem;
+}
+
+.dialog {
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 24rem;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+}
+
+.dialogLight { background-color: #ffffff; }
+.dialogDark  { background-color: #1e293b; }
+
+.dialogTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.dialogTitleLight { color: #1e293b; }
+.dialogTitleDark  { color: #ffffff; }
+
+.dialogDesc {
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+.dialogDescLight { color: #64748b; }
+.dialogDescDark  { color: #94a3b8; }
+
+.dialogButtons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.dialogCancelBtn {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 1rem;
+  border-width: 1px;
+  border-style: solid;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  cursor: pointer;
+  background: none;
+}
+
+.dialogCancelBtnLight { border-color: #e2e8f0; color: #475569; }
+.dialogCancelBtnLight:hover { background-color: #f8fafc; }
+.dialogCancelBtnDark  { border-color: rgba(255,255,255,0.1); color: #cbd5e1; }
+.dialogCancelBtnDark:hover  { background-color: rgba(255,255,255,0.1); }
+
+.dialogDeleteBtn {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 1rem;
+  background-color: #ef4444;
+  color: #ffffff;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.dialogDeleteBtn:hover    { background-color: #dc2626; }
+.dialogDeleteBtn:disabled { opacity: 0.7; cursor: not-allowed; }

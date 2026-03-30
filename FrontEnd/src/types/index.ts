@@ -16,4 +16,4 @@ export interface Photo {
   uploadDate: string;
 }
 
-export type ViewType = 'signup' | 'login' | 'set-date' | 'unlock' | 'gallery' | 'upload' | 'upgrade' | 'home';
+export type ViewType = 'signup' | 'login' | 'set-date' | 'unlock' | 'gallery' | 'upload' | 'upgrade' | 'home' | 'games';

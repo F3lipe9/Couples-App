@@ -1,0 +1,155 @@
+/* ── Base ────────────────────────────────────────────────────────────────── */
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  padding-bottom: 6rem;
+  position: relative;
+  overflow: hidden;
+  transition: background-color 0.3s;
+}
+
+.pageLight {
+  background-color: #fff1f2;
+}
+
+.pageDark {
+  background-color: #0f172a;
+}
+
+.blobs {
+  position: absolute;
+  inset: 0;
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.blobTopLeft {
+  position: absolute;
+  top: 2.5rem;
+  left: 2.5rem;
+  width: 8rem;
+  height: 8rem;
+  background-color: #f43f5e;
+  border-radius: 50%;
+  filter: blur(48px);
+}
+
+.blobBottomRight {
+  position: absolute;
+  bottom: 2.5rem;
+  right: 2.5rem;
+  width: 12rem;
+  height: 12rem;
+  background-color: #a855f7;
+  border-radius: 50%;
+  filter: blur(48px);
+}
+
+.content {
+  width: 100%;
+  max-width: 24rem;
+  text-align: center;
+  position: relative;
+  z-index: 10;
+}
+
+.contentShake {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+/* ── Icon box ────────────────────────────────────────────────────────────── */
+
+.iconBox {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  border-width: 1px;
+  border-style: solid;
+  backdrop-filter: blur(8px);
+}
+
+.iconBoxLight {
+  background-color: #ffe4e6;
+  border-color: #fecdd3;
+}
+
+.iconBoxDark {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Title ───────────────────────────────────────────────────────────────── */
+
+.title {
+  font-size: 1.875rem;
+  font-family: serif;
+  margin-bottom: 0.5rem;
+}
+
+.titleLight { color: #1e293b; }
+.titleDark  { color: #ffffff; }
+
+/* ── Subtitle ────────────────────────────────────────────────────────────── */
+
+.subtitle {
+  margin-bottom: 2rem;
+}
+
+.subtitleLight { color: #64748b; }
+.subtitleDark  { color: #94a3b8; }
+
+/* ── Date input ──────────────────────────────────────────────────────────── */
+
+.dateInput {
+  width: 100%;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  text-align: center;
+  font-size: 1.25rem;
+  border-width: 1px;
+  border-style: solid;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  margin-bottom: 1.5rem;
+}
+
+.dateInputLight {
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+  color: #1e293b;
+}
+
+.dateInputLight::placeholder { color: #94a3b8; }
+
+.dateInputLight:focus {
+  border-color: #fb7185;
+  box-shadow: 0 0 0 1px #fb7185;
+}
+
+.dateInputDark {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.dateInputDark::placeholder { color: #64748b; }
+
+.dateInputDark:focus {
+  border-color: #f43f5e;
+  box-shadow: 0 0 0 1px #f43f5e;
+}

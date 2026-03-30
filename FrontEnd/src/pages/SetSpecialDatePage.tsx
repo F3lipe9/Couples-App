@@ -3,6 +3,7 @@ import { Calendar } from 'lucide-react';
 import { User as FirebaseUser } from 'firebase/auth';
 import { Button } from '../components/index';
 import { User, ViewType } from '../types';
+import styles from '../styles/SetSpecialDatePage.module.css';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api';
 
@@ -31,7 +32,7 @@ export const SetSpecialDatePage: React.FC<SetSpecialDatePageProps> = ({
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ specialDate: date }),
       });
@@ -52,21 +53,19 @@ export const SetSpecialDatePage: React.FC<SetSpecialDatePageProps> = ({
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-rose-50">
-      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-xl border border-rose-100 text-center">
-        <Calendar className="w-12 h-12 text-rose-400 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-slate-800 mb-2">When did it start?</h2>
-        <p className="text-slate-500 mb-6">
+    <div className={styles.page}>
+      <div className={styles.card}>
+        <Calendar size={48} className={styles.icon} />
+        <h2 className={styles.title}>When did it start?</h2>
+        <p className={styles.subtitle}>
           Pick the date that means the most to us. This will be our password to enter.
         </p>
-
         <input
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="w-full p-4 text-center text-xl rounded-xl border-2 border-rose-200 focus:border-rose-500 outline-none bg-rose-50 text-slate-800 mb-6 font-semibold"
+          className={styles.dateInput}
         />
-
         <Button onClick={handleSave} isLoading={loading}>Save Date</Button>
       </div>
     </div>

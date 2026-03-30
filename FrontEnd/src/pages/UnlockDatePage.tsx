@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Lock, Heart } from 'lucide-react';
-import { Button, Navbar} from '../components/index';
+import { Button, Navbar } from '../components/index';
 import { User, ViewType } from '../types';
+import styles from '../styles/UnlockDatePage.module.css';
 
 interface UnlockDatePageProps {
   user: User;
@@ -22,12 +23,7 @@ export const UnlockDatePage: React.FC<UnlockDatePageProps> = ({
 
   const handleUnlock = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!user.specialDate) {
-      onNavigate('set-date');
-      return;
-    }
-
+    if (!user.specialDate) { onNavigate('set-date'); return; }
     if (inputDate === user.specialDate) {
       onNavigate('home');
     } else {
@@ -37,57 +33,43 @@ export const UnlockDatePage: React.FC<UnlockDatePageProps> = ({
     }
   };
 
-  // ── Theme tokens ────────────────────────────────────────────────────────
-  const t = darkMode
-    ? {
-        page:        'bg-slate-900',
-        iconBox:     'bg-white/10 border-white/20',
-        title:       'text-white',
-        subtitle:    'text-slate-400',
-        input:       'bg-white/10 border-white/20 text-white placeholder-slate-500 focus:border-rose-500 focus:ring-rose-500',
-        btnClass:    'bg-rose-600 hover:bg-rose-500 border-none',
-      }
-    : {
-        page:        'bg-rose-50',
-        iconBox:     'bg-rose-100 border-rose-200',
-        title:       'text-slate-800',
-        subtitle:    'text-slate-500',
-        input:       'bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-rose-400 focus:ring-rose-400',
-        btnClass:    '',
-      };
-
   return (
-    <div className={`min-h-screen ${t.page} flex flex-col items-center justify-center p-6 pb-24 relative overflow-hidden transition-colors duration-300`}>
-      {/* Background blobs — only in dark mode */}
+    <div className={[
+      styles.page,
+      darkMode ? styles.pageDark : styles.pageLight,
+    ].join(' ')}>
+
       {darkMode && (
-        <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
-          <div className="absolute top-10 left-10 w-32 h-32 bg-rose-500 rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-48 h-48 bg-purple-500 rounded-full blur-3xl" />
+        <div className={styles.blobs}>
+          <div className={styles.blobTopLeft} />
+          <div className={styles.blobBottomRight} />
         </div>
       )}
 
-      <div className={`w-full max-w-sm text-center z-10 ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}>
-        <div className={`w-20 h-20 ${t.iconBox} backdrop-blur-lg rounded-2xl flex items-center justify-center mx-auto mb-6 border`}>
+      <div className={[styles.content, shake ? styles.contentShake : ''].join(' ')}>
+        <div className={[styles.iconBox, darkMode ? styles.iconBoxDark : styles.iconBoxLight].join(' ')}>
           {error
-            ? <Lock className="w-8 h-8 text-rose-400" />
-            : <Heart className={`w-8 h-8 ${darkMode ? 'text-rose-300' : 'text-rose-500'}`} />
+            ? <Lock size={32} color="#fb7185" />
+            : <Heart size={32} color={darkMode ? '#fda4af' : '#f43f5e'} />
           }
         </div>
 
-        <h2 className={`text-3xl ${t.title} font-serif mb-2`}>
+        <h2 className={[styles.title, darkMode ? styles.titleDark : styles.titleLight].join(' ')}>
           {error ? 'Who are you? 🤔' : 'When did it begin?'}
         </h2>
-        <p className={`${t.subtitle} mb-8`}>Enter our special date to unlock.</p>
+        <p className={[styles.subtitle, darkMode ? styles.subtitleDark : styles.subtitleLight].join(' ')}>
+          Enter our special date to unlock.
+        </p>
 
         <form onSubmit={handleUnlock}>
           <input
             type="date"
             value={inputDate}
             onChange={(e) => { setInputDate(e.target.value); setError(false); }}
-            className={`w-full border rounded-xl px-4 py-4 text-center text-xl focus:outline-none focus:ring-1 transition-all mb-6 ${t.input}`}
+            className={[styles.dateInput, darkMode ? styles.dateInputDark : styles.dateInputLight].join(' ')}
             required
           />
-          <Button type="submit" variant="primary" className={t.btnClass}>
+          <Button type="submit" variant="primary" className={darkMode ? 'bg-rose-600 hover:bg-rose-500 border-none' : ''}>
             Unlock Memories
           </Button>
         </form>
@@ -100,14 +82,6 @@ export const UnlockDatePage: React.FC<UnlockDatePageProps> = ({
         toggleDarkMode={toggleDarkMode}
         onNavigate={onNavigate}
       />
-
-      <style>{`
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-8px); }
-          75% { transform: translateX(8px); }
-        }
-      `}</style>
     </div>
   );
 };
